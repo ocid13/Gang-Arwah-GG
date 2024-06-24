@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
   // Initialize AutoNumeric for input fields
-  const productPrice = new AutoNumeric('#product_price', { currencySymbol: 'Rp. ', decimalPlaces: 2 });
-  const productCost = new AutoNumeric('#product_cost', { currencySymbol: 'Rp. ', decimalPlaces: 2 });
+  const productPrice = new AutoNumeric('#product_price', { currencySymbol: 'Rp', decimalPlaces: 2 });
+  const productCost = new AutoNumeric('#product_cost', { currencySymbol: 'Rp', decimalPlaces: 2 });
 
   // Menyembunyikan form tambah data saat halaman dimuat
   document.getElementById('form-add-data').classList.remove('active');
@@ -10,15 +10,15 @@ document.addEventListener('DOMContentLoaded', function() {
   fetch('http://localhost:3001/products')
     .then(response => response.json())
     .then(data => {
-      if(data.success) {
+      if (data.success) {
         const tbody = document.getElementById('data');
         data.data.forEach(row => {
           const tr = document.createElement('tr');
           tr.setAttribute('data-id', row.id);
 
           // Format selling_price and cost_of_product using AutoNumeric
-          const formattedSellingPrice = AutoNumeric.format(row.selling_price, { currencySymbol: 'Rp. ', decimalPlaces: 0 });
-          const formattedCostOfProduct = AutoNumeric.format(row.cost_of_product, { currencySymbol: 'Rp. ', decimalPlaces: 0 });
+          const formattedSellingPrice = AutoNumeric.format(row.selling_price, { currencySymbol: 'Rp', decimalPlaces: 2 });
+          const formattedCostOfProduct = AutoNumeric.format(row.cost_of_product, { currencySymbol: 'Rp', decimalPlaces: 2 });
 
           tr.innerHTML = `
             <td>${row.id}</td>
@@ -49,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function() {
 function insertProduct() {
   // Ambil nilai dari form input
   const productName = document.getElementById('product_name').value;
-  const productCode = ''; // Sesuaikan dengan nilai yang sesuai jika ada
   const barcode = document.getElementById('product_barcode').value;
   const category = document.getElementById('product_category').value;
   const sellingPrice = AutoNumeric.getAutoNumericElement('#product_price').getNumber();
@@ -58,10 +57,13 @@ function insertProduct() {
   const unit = document.getElementById('product_unit').value;
 
   // Validasi input
-  if(!productName || !sellingPrice || !costOfProduct || !productInitialQty) {
+  if (!productName || !sellingPrice || !costOfProduct || !productInitialQty) {
     alert('All required fields must be filled');
     return;
   }
+
+  // Generate product code based on the product name and current timestamp
+  const productCode = generateProductCode(productName);
 
   // Buat objek data yang akan dikirim ke server
   const data = {
@@ -85,7 +87,7 @@ function insertProduct() {
   })
   .then(response => response.json())
   .then(data => {
-    if(data.success) {
+    if (data.success) {
       const formattedSellingPrice = AutoNumeric.format(data.data.selling_price, { currencySymbol: 'Rp', decimalPlaces: 2 });
       const formattedCostOfProduct = AutoNumeric.format(data.data.cost_of_product, { currencySymbol: 'Rp', decimalPlaces: 2 });
 
@@ -126,4 +128,11 @@ function insertProduct() {
     console.error('Error adding product:', error);
     alert('Error adding product');
   });
+}
+
+// Function to generate a unique product code based on the product name and current timestamp
+function generateProductCode(productName) {
+  const timestamp = Date.now();
+  const namePart = productName.replace(/\s+/g, '').toUpperCase().slice(0, 3);
+  return `${namePart}-${timestamp}`;
 }
