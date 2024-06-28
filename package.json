@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "autonumeric": "^4.10.5"
+  },
+  "name": "fe",
+  "version": "1.0.0",
+  "description": "Rancang Bangun Aplikasi Point of Sale (POS) Berbasis Web untuk Kedai Kopi Gang Arwah",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Haida Khoirurrosyid",
+  "license": "ISC"
+}
