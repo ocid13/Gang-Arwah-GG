@@ -18,9 +18,9 @@ document.addEventListener('DOMContentLoaded', function() {
         data.data.forEach(category => {
           const option = document.createElement('option');
           option.value = category.id;
-          option.textContent = category.category_name;
+          option.textContent = category.category;
           select.appendChild(option);
-          categories[category.id] = category.category_name; // Store category in the categories object
+          categories[category.id] = category.category; // Store category in the categories object
         });
         console.log('Categories fetched and displayed successfully', data.data);
       } else {
@@ -41,9 +41,9 @@ document.addEventListener('DOMContentLoaded', function() {
         data.data.forEach(unit => {
           const option = document.createElement('option');
           option.value = unit.id;
-          option.textContent = unit.unit_name;
+          option.textContent = unit.unit;
           select.appendChild(option);
-          units[unit.id] = unit.unit_name; // Store unit in the units object
+          units[unit.id] = unit.unit; // Store unit in the units object
         });
         console.log('Units fetched and displayed successfully', data.data);
       } else {
@@ -95,7 +95,9 @@ document.addEventListener('DOMContentLoaded', function() {
           button.addEventListener('click', function() {
             const tr = this.closest('tr');
             const productId = tr.getAttribute('data-id');
-            deleteProduct(productId, tr);
+            if (confirm('Are you sure you want to delete this product?')) {
+              deleteProduct(productId, tr);
+            }
           });
         });
       } else {
@@ -185,7 +187,9 @@ function insertProduct() {
       document.querySelector(`tr[data-id="${data.data.id}"] .delete-button`).addEventListener('click', function() {
         const tr = this.closest('tr');
         const productId = tr.getAttribute('data-id');
-        deleteProduct(productId, tr);
+        if (confirm('Are you sure you want to delete this product?')) {
+          deleteProduct(productId, tr);
+        }
       });
     } else {
       alert('Failed to add product');
