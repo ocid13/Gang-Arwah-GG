@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
           const unitName = units[row.unit] || row.unit;
 
           tr.innerHTML = `
-            <td>${row.id}</td>
+            <td><input type="checkbox" class="data-checkbox" id="checkbox-${row.id}"></td>
             <td>${row.product_name}</td>
             <td>${row.product_code}</td>
             <td>${row.barcode}</td>
@@ -88,18 +88,23 @@ document.addEventListener('DOMContentLoaded', function() {
               <button class="btn btn-sm btn-danger delete-button"><i class="fa fa-trash"></i></button>
             </td>`;
           tbody.appendChild(tr);
-        });
 
-        // Add event listener for delete buttons
-        document.querySelectorAll('.delete-button').forEach(button => {
-          button.addEventListener('click', function() {
-            const tr = this.closest('tr');
-            const productId = tr.getAttribute('data-id');
+          // Add event listener for the new delete button
+          tr.querySelector('.delete-button').addEventListener('click', function() {
             if (confirm('Are you sure you want to delete this product?')) {
-              deleteProduct(productId, tr);
+              deleteProduct(row.id, tr);
             }
           });
         });
+
+        // Add event listener for select all checkbox if it exists
+        const selectAllCheckbox = document.getElementById('select-all');
+        if (selectAllCheckbox) {
+          selectAllCheckbox.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.data-checkbox');
+            checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+          });
+        }
       } else {
         alert("Failed to fetch data");
       }
@@ -108,6 +113,12 @@ document.addEventListener('DOMContentLoaded', function() {
       console.error('Error fetching data:', error);
       alert('Error fetching data');
     });
+
+  // Add event listener to delete button
+  const deleteSelectedButton = document.getElementById('delete-selected');
+  if (deleteSelectedButton) {
+    deleteSelectedButton.addEventListener('click', deleteSelectedProducts);
+  }
 });
 
 function insertProduct() {
@@ -157,7 +168,7 @@ function insertProduct() {
 
       const newRow = `
         <tr data-id="${data.data.id}">
-          <td>${data.data.id}</td>
+          <td><input type="checkbox" class="data-checkbox" id="checkbox-${data.data.id}"></td>
           <td>${data.data.product_name}</td>
           <td>${data.data.product_code}</td>
           <td>${data.data.barcode}</td>
@@ -224,4 +235,38 @@ function deleteProduct(productId, tr) {
     console.error('Error deleting product:', error);
     alert('Error deleting product');
   });
+}
+
+function deleteSelectedProducts() {
+  const selectedIds = Array.from(document.querySelectorAll('.data-checkbox:checked')).map(cb => cb.id.split('-')[1]);
+  if (selectedIds.length === 0) {
+    alert('No products selected');
+    return;
+  }
+
+  if (confirm('Are you sure you want to delete the selected products?')) {
+    fetch('http://localhost:3001/products/delete-multiple', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ ids: selectedIds })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        selectedIds.forEach(id => {
+          const row = document.querySelector(`tr[data-id="${id}"]`);
+          if (row) row.remove();
+        });
+        alert('Selected products deleted successfully');
+      } else {
+        alert('Failed to delete selected products');
+      }
+    })
+    .catch(error => {
+      console.error('Error deleting products:', error);
+      alert('Error deleting products');
+    });
+  }
 }

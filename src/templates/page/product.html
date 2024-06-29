@@ -48,7 +48,7 @@
             <div class="row g-3">
               <div class="col-auto">
                 <button class="btn btn-sm btn-light btn-light-bordered" id="add-data" title="Tambah Data" onclick="openFormAddData()"><i class="fa fa-plus"></i></button>
-                <button class="btn btn-sm btn-light btn-light-bordered"><i class="fa fa-trash"></i></button>
+                <button class="btn btn-sm btn-light btn-light-bordered" id="delete-selected" onclick="deleteSelectedProducts()"><i class="fa fa-trash"></i></button>
                 <button class="btn btn-sm btn-light btn-light-bordered"><i class="fa fa-file-excel"></i></button>
                 <button class="btn btn-sm btn-light btn-light-bordered"><i class="fa fa-file-pdf"></i></button>
                 <button class="btn btn-sm btn-light btn-light-bordered"><i class="fa fa-print"></i></button>
@@ -140,7 +140,7 @@
             <table class="table table-sm table-bordered" style="font-size: 13px;">
               <thead class="table-light" id="col-head">
                 <tr>
-                  <th>Id</th>
+                  <th><input type="checkbox" id="select-all"></th>
                   <th>Nama Produk</th>
                   <th>Kode Produk</th>
                   <th>Barcode</th>
