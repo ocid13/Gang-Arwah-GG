@@ -3,9 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <link rel="stylesheet" href="../../../assets/bootstrap/css/bootstrap.min.css">
   <link rel="stylesheet" href="../../../assets/fontawesome/css/all.min.css">
   <link rel="stylesheet" href="../../style/style.css">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.13/jspdf.plugin.autotable.min.js"></script>
   <title>Product</title>
 </head>
 <body id="product-data">
@@ -49,23 +54,22 @@
               <div class="col-auto">
                 <button class="btn btn-sm btn-light btn-light-bordered" id="add-data" title="Tambah Data" onclick="openFormAddData()"><i class="fa fa-plus"></i></button>
                 <button class="btn btn-sm btn-light btn-light-bordered" id="delete-selected" onclick="deleteSelectedProducts()"><i class="fa fa-trash"></i></button>
-                <button class="btn btn-sm btn-light btn-light-bordered"><i class="fa fa-file-excel"></i></button>
+                <button class="btn btn-sm btn-light btn-light-bordered" id="export-excel-button"><i class="fa fa-file-excel"></i></button>
                 <button class="btn btn-sm btn-light btn-light-bordered"><i class="fa fa-file-pdf"></i></button>
-                <button class="btn btn-sm btn-light btn-light-bordered"><i class="fa fa-print"></i></button>
-                <button class="btn btn-sm btn-light btn-light-bordered"><i class="fa fa-check"></i></button>
-                <button class="btn btn-sm btn-light btn-light-bordered"><i class="fa fa-times"></i></button>
+                <button class="btn btn-sm btn-light btn-light-bordered" id="print-data"><i class="fa fa-print"></i></button>
+                <button class="btn btn-sm btn-light btn-light-bordered" id="select-all-button"><i class="fa fa-check"></i></button>
               </div>
               <div class="col-auto">
                 <select name="" id="row_per_page" class="form-select form-select-sm">
+                  <option value="5">5</option>
                   <option value="10">10</option>
                   <option value="25">25</option>
                   <option value="50">50</option>
-                  <option value="75">75</option>
                 </select>
               </div>
               <div class="col-auto">
                 <div class="input-group" id="search-input-group">
-                  <input type="text" class="form-control form-control-sm" id="search-data" name="search-data" placeholder="Harga Jual" required>
+                  <input type="text" class="form-control form-control-sm" id="search-data" name="search-data" placeholder="Nama Produk" required>
                   <div class="input-group-append">
                     <button class="btn btn-sm btn-light btn-light-bordered" id="btn-search-data"><i class="fa fa-search"></i></button>
                   </div>
@@ -137,10 +141,10 @@
       <div class="row">
         <div class="col-xl-12">
           <div class="table-responsive">
-            <table class="table table-sm table-bordered" style="font-size: 13px;">
+            <table class="table table-sm table-bordered" style="font-size: 13px;" id="products-table">
               <thead class="table-light" id="col-head">
                 <tr>
-                  <th><input type="checkbox" id="select-all"></th>
+                  <th></th>
                   <th>Nama Produk</th>
                   <th>Kode Produk</th>
                   <th>Barcode</th>
@@ -149,6 +153,7 @@
                   <th>Harga Jual / Satuan</th>
                   <th>Harga Pokok / Satuan</th>
                   <th>Saldo Awal</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody id="data"></tbody>

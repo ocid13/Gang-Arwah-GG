@@ -84,25 +84,34 @@ document.addEventListener('DOMContentLoaded', function() {
             <td>${formattedCostOfProduct}</td>
             <td>${row.product_initial_qty}</td>
             <td>
-              <button class="btn btn-sm btn-light btn-light-bordered"><i class="fa fa-edit"></i></button>
-              <button class="btn btn-sm btn-danger delete-button"><i class="fa fa-trash"></i></button>
+              <button class="btn btn-sm btn-light btn-light-bordered delete-button" data-id="${row.id}"><i class="fa fa-trash"></i></button>
             </td>`;
           tbody.appendChild(tr);
 
           // Add event listener for the new delete button
           tr.querySelector('.delete-button').addEventListener('click', function() {
+            const productId = this.getAttribute('data-id');
             if (confirm('Are you sure you want to delete this product?')) {
-              deleteProduct(row.id, tr);
+              deleteProducts([productId], () => tr.remove());
             }
           });
         });
 
-        // Add event listener for select all checkbox if it exists
-        const selectAllCheckbox = document.getElementById('select-all');
-        if (selectAllCheckbox) {
-          selectAllCheckbox.addEventListener('change', function() {
+        // Add event listener for select all button
+        const selectAllButton = document.getElementById('select-all-button');
+        if (selectAllButton) {
+          selectAllButton.addEventListener('click', function() {
             const checkboxes = document.querySelectorAll('.data-checkbox');
-            checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+            const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+            checkboxes.forEach(checkbox => checkbox.checked = !allChecked);
+          });
+        }
+
+        // Add event listener for export to Excel button
+        const exportExcelButton = document.getElementById('export-excel-button');
+        if (exportExcelButton) {
+          exportExcelButton.addEventListener('click', function() {
+            exportTableToExcel('products-table', 'Products');
           });
         }
       } else {
@@ -114,13 +123,35 @@ document.addEventListener('DOMContentLoaded', function() {
       alert('Error fetching data');
     });
 
-  // Add event listener to delete button
-  const deleteSelectedButton = document.getElementById('delete-selected');
-  if (deleteSelectedButton) {
-    deleteSelectedButton.addEventListener('click', deleteSelectedProducts);
-  }
+  // Event listener for delete selected button
+  document.getElementById('delete-selected').addEventListener('click', deleteSelectedProducts);
 });
 
+// Unified delete function
+function deleteProducts(ids, callback) {
+  fetch('http://localhost:3001/products/delete', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ ids })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      callback();
+      alert('Products deleted successfully');
+    } else {
+      alert('Failed to delete products');
+    }
+  })
+  .catch(error => {
+    console.error('Error deleting products:', error);
+    alert('Error deleting products');
+  });
+}
+
+// Insert product function
 function insertProduct() {
   const productName = document.getElementById('product_name').value;
   const barcode = document.getElementById('product_barcode').value;
@@ -178,8 +209,7 @@ function insertProduct() {
           <td>${formattedCostOfProduct}</td>
           <td>${data.data.product_initial_qty}</td>
           <td>
-            <button class="btn btn-sm btn-light btn-light-bordered"><i class="fa fa-edit"></i></button>
-            <button class="btn btn-sm btn-danger delete-button"><i class="fa fa-trash"></i></button>
+            <button class="btn btn-sm btn-light btn-light-bordered delete-button" data-id="${data.data.id}"><i class="fa fa-trash"></i></button>
           </td>`;
       document.getElementById('data').insertAdjacentHTML('beforeend', newRow);
       alert('Product added successfully');
@@ -199,7 +229,7 @@ function insertProduct() {
         const tr = this.closest('tr');
         const productId = tr.getAttribute('data-id');
         if (confirm('Are you sure you want to delete this product?')) {
-          deleteProduct(productId, tr);
+          deleteProducts([productId], () => tr.remove());
         }
       });
     } else {
@@ -218,25 +248,6 @@ function generateProductCode(productName) {
   return `${namePart}-${timestamp}`;
 }
 
-function deleteProduct(productId, tr) {
-  fetch(`http://localhost:3001/products/${productId}`, {
-    method: 'DELETE',
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      tr.remove();
-      alert('Product deleted successfully');
-    } else {
-      alert('Failed to delete product');
-    }
-  })
-  .catch(error => {
-    console.error('Error deleting product:', error);
-    alert('Error deleting product');
-  });
-}
-
 function deleteSelectedProducts() {
   const selectedIds = Array.from(document.querySelectorAll('.data-checkbox:checked')).map(cb => cb.id.split('-')[1]);
   if (selectedIds.length === 0) {
@@ -245,28 +256,31 @@ function deleteSelectedProducts() {
   }
 
   if (confirm('Are you sure you want to delete the selected products?')) {
-    fetch('http://localhost:3001/products/delete-multiple', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ ids: selectedIds })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        selectedIds.forEach(id => {
-          const row = document.querySelector(`tr[data-id="${id}"]`);
-          if (row) row.remove();
-        });
-        alert('Selected products deleted successfully');
-      } else {
-        alert('Failed to delete selected products');
-      }
-    })
-    .catch(error => {
-      console.error('Error deleting products:', error);
-      alert('Error deleting products');
+    deleteProducts(selectedIds, () => {
+      selectedIds.forEach(id => {
+        const row = document.querySelector(`tr[data-id="${id}"]`);
+        if (row) row.remove();
+      });
     });
   }
+}
+
+function exportTableToExcel(tableID, filename = '') {
+  const table = document.getElementById(tableID);
+  const wb = XLSX.utils.table_to_book(table, { sheet: "Sheet1" });
+  const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+
+  function s2ab(s) {
+    const buf = new ArrayBuffer(s.length);
+    const view = new Uint8Array(buf);
+    for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+    return buf;
+  }
+
+  const downloadLink = document.createElement('a');
+  downloadLink.href = URL.createObjectURL(new Blob([s2ab(wbout)], { type: "application/octet-stream" }));
+  downloadLink.download = filename ? filename + '.xlsx' : 'excel_data.xlsx';
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
 }
