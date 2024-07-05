@@ -122,9 +122,6 @@ document.addEventListener('DOMContentLoaded', function() {
       console.error('Error fetching data:', error);
       alert('Error fetching data');
     });
-
-  // Event listener for delete selected button
-  document.getElementById('delete-selected').addEventListener('click', deleteSelectedProducts);
 });
 
 // Unified delete function
@@ -140,7 +137,6 @@ function deleteProducts(ids, callback) {
   .then(data => {
     if (data.success) {
       callback();
-      alert('Products deleted successfully');
     } else {
       alert('Failed to delete products');
     }
@@ -151,7 +147,24 @@ function deleteProducts(ids, callback) {
   });
 }
 
-// Insert product function
+function deleteSelectedProducts() {
+  const selectedIds = Array.from(document.querySelectorAll('.data-checkbox:checked')).map(cb => cb.id.split('-')[1]);
+  if (selectedIds.length === 0) {
+    alert('No products selected');
+    return;
+  }
+
+  if (confirm('Are you sure you want to delete the selected products?')) {
+    deleteProducts(selectedIds, () => {
+      selectedIds.forEach(id => {
+        const row = document.querySelector(`tr[data-id="${id}"]`);
+        if (row) row.remove();
+      });
+      alert('Products deleted successfully'); 
+    });
+  }
+}
+
 function insertProduct() {
   const productName = document.getElementById('product_name').value;
   const barcode = document.getElementById('product_barcode').value;
@@ -246,23 +259,6 @@ function generateProductCode(productName) {
   const timestamp = Date.now();
   const namePart = productName.replace(/\s+/g, '').toUpperCase().slice(0, 3);
   return `${namePart}-${timestamp}`;
-}
-
-function deleteSelectedProducts() {
-  const selectedIds = Array.from(document.querySelectorAll('.data-checkbox:checked')).map(cb => cb.id.split('-')[1]);
-  if (selectedIds.length === 0) {
-    alert('No products selected');
-    return;
-  }
-
-  if (confirm('Are you sure you want to delete the selected products?')) {
-    deleteProducts(selectedIds, () => {
-      selectedIds.forEach(id => {
-        const row = document.querySelector(`tr[data-id="${id}"]`);
-        if (row) row.remove();
-      });
-    });
-  }
 }
 
 function exportTableToExcel(tableID, filename = '') {
