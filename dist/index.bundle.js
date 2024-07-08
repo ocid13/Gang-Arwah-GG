@@ -1,0 +1,1 @@
+document.addEventListener("DOMContentLoaded",(function(){var e=document.querySelector('a.menu-link[onClick="openProductDataPage()"]');e&&e.addEventListener("click",(function(e){e.preventDefault(),window.open("../templates/page/product.html","_blank")}))}));

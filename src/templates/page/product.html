@@ -9,8 +9,9 @@
   <link rel="stylesheet" href="../../style/style.css">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.13/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.21/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <title>Product</title>
 </head>
 <body id="product-data">
@@ -54,40 +55,40 @@
               <div class="col-auto">
                 <button class="btn btn-sm btn-light btn-light-bordered" id="add-data" title="Tambah Data" onclick="openFormAddData()"><i class="fa fa-plus"></i></button>
                 <button class="btn btn-sm btn-light btn-light-bordered" id="delete-selected" onclick="deleteSelectedProducts()"><i class="fa fa-trash"></i></button>
-                <button class="btn btn-sm btn-light btn-light-bordered" id="export-excel-button"><i class="fa fa-file-excel"></i></button>
-                <button class="btn btn-sm btn-light btn-light-bordered"><i class="fa fa-file-pdf"></i></button>
-                <button class="btn btn-sm btn-light btn-light-bordered" id="print-data"><i class="fa fa-print"></i></button>
-                <button class="btn btn-sm btn-light btn-light-bordered" id="select-all-button"><i class="fa fa-check"></i></button>
+                <button class="btn btn-sm btn-light btn-light-bordered" id="export-excel-button" onclick="exportExcel()"><i class="fa fa-file-excel"></i></button>
+                <button class="btn btn-sm btn-light btn-light-bordered" id="export-pdf-button" onclick="exportPDF()"><i class="fa fa-file-pdf"></i></button>
+                <button class="btn btn-sm btn-light btn-light-bordered" id="print-button" onclick="printData()"><i class="fa fa-print"></i></button>
+                <button class="btn btn-sm btn-light btn-light-bordered" id="select-all-button" onclick="selectAll()"><i class="fa fa-check"></i></button>
               </div>
               <div class="col-auto">
                 <select name="" id="row_per_page" class="form-select form-select-sm">
-                  <option value="5">5</option>
-                  <option value="10">10</option>
-                  <option value="25">25</option>
+                  <option value="15">15</option>
+                  <option value="30">30</option>
                   <option value="50">50</option>
+                  <option value="75">75</option>
                 </select>
               </div>
               <div class="col-auto">
                 <div class="input-group" id="search-input-group">
                   <input type="text" class="form-control form-control-sm" id="search-data" name="search-data" placeholder="Nama Produk" required>
                   <div class="input-group-append">
-                    <button class="btn btn-sm btn-light btn-light-bordered" id="btn-search-data"><i class="fa fa-search"></i></button>
+                    <button class="btn btn-sm btn-light btn-light-bordered" id="btn-search-data" onclick="searchButton()"><i class="fa fa-search"></i></button>
                   </div>
                 </div>
               </div>
               <div class="col-auto" id="pagination">
                 <div class="btn-group btn-group-sm">
                   <div class="btn-group btn-group-sm me-1">
-                    <a href="#" class="btn btn-sm btn-light btn-light-bordered" id="first-page"><i class="fa fa-step-backward"></i></a>
-                    <a href="#" class="btn btn-sm btn-light btn-light-bordered" id="prev-page"><i class="fa fa-backward"></i></a>
+                    <a href="#" class="btn btn-sm btn-light btn-light-bordered" id="first-page" onclick="firstPage()"><i class="fa fa-step-backward"></i></a>
+                    <a href="#" class="btn btn-sm btn-light btn-light-bordered" id="prev-page" onclick="prevPage()"><i class="fa fa-backward"></i></a>
                   </div>
                   <div class="input-group input-group-sm me-1">
                     <input type="text" class="form-control form-control-sm" id="page-number" value="1">
                     <input type="text" class="form-control form-control-sm" id="total-pages" readonly>
                   </div>
                   <div class="btn-group btn-group-sm">
-                    <a href="#" class="btn btn-sm btn-light btn-light-bordered" id="next-page"><i class="fa fa-forward"></i></a>
-                    <a href="#" class="btn btn-sm btn-light btn-light-bordered" id="last-page"><i class="fa fa-step-forward"></i></a>
+                    <a href="#" class="btn btn-sm btn-light btn-light-bordered" id="next-page" onclick="nextPage()"><i class="fa fa-forward"></i></a>
+                    <a href="#" class="btn btn-sm btn-light btn-light-bordered" id="last-page" onclick="lastPage()"><i class="fa fa-step-forward"></i></a>
                   </div>
                 </div>
               </div>

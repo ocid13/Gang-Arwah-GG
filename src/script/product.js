@@ -1,5 +1,9 @@
 let categories = {};
 let units = {};
+let allProducts = []; // Store all fetched products
+let currentPage = 1;
+let itemsPerPage = 15; // Default items per page
+let editingProductId = null; // Variable to track the product being edited
 
 document.addEventListener('DOMContentLoaded', function() {
   // Initialize AutoNumeric for input fields
@@ -24,12 +28,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         console.log('Categories fetched and displayed successfully', data.data);
       } else {
-        alert("Failed to fetch categories");
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to fetch categories',
+        });
       }
     })
     .catch(error => {
       console.error('Error fetching categories:', error);
-      alert('Error fetching categories');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error fetching categories',
+      });
     });
 
   // Fetch units from backend
@@ -47,12 +59,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         console.log('Units fetched and displayed successfully', data.data);
       } else {
-        alert("Failed to fetch units");
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to fetch units',
+        });
       }
     })
     .catch(error => {
       console.error('Error fetching units:', error);
-      alert('Error fetching units');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error fetching units',
+      });
     });
 
   // Fetch data from backend
@@ -60,71 +80,126 @@ document.addEventListener('DOMContentLoaded', function() {
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        const tbody = document.getElementById('data');
-        data.data.forEach(row => {
-          const tr = document.createElement('tr');
-          tr.setAttribute('data-id', row.id);
-
-          const formattedSellingPrice = AutoNumeric.format(row.selling_price, { currencySymbol: 'Rp', decimalPlaces: 2 });
-          const formattedCostOfProduct = AutoNumeric.format(row.cost_of_product, { currencySymbol: 'Rp', decimalPlaces: 2 });
-
-          // Map category ID to category name
-          const categoryName = categories[row.category] || row.category;
-          // Map unit ID to unit name
-          const unitName = units[row.unit] || row.unit;
-
-          tr.innerHTML = `
-            <td><input type="checkbox" class="data-checkbox" id="checkbox-${row.id}"></td>
-            <td>${row.product_name}</td>
-            <td>${row.product_code}</td>
-            <td>${row.barcode}</td>
-            <td>${categoryName}</td>
-            <td>${unitName}</td>
-            <td>${formattedSellingPrice}</td>
-            <td>${formattedCostOfProduct}</td>
-            <td>${row.product_initial_qty}</td>
-            <td>
-              <button class="btn btn-sm btn-light btn-light-bordered delete-button" data-id="${row.id}"><i class="fa fa-trash"></i></button>
-            </td>`;
-          tbody.appendChild(tr);
-
-          // Add event listener for the new delete button
-          tr.querySelector('.delete-button').addEventListener('click', function() {
-            const productId = this.getAttribute('data-id');
-            if (confirm('Are you sure you want to delete this product?')) {
-              deleteProducts([productId], () => tr.remove());
-            }
-          });
-        });
-
-        // Add event listener for select all button
-        const selectAllButton = document.getElementById('select-all-button');
-        if (selectAllButton) {
-          selectAllButton.addEventListener('click', function() {
-            const checkboxes = document.querySelectorAll('.data-checkbox');
-            const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
-            checkboxes.forEach(checkbox => checkbox.checked = !allChecked);
-          });
-        }
-
-        // Add event listener for export to Excel button
-        const exportExcelButton = document.getElementById('export-excel-button');
-        if (exportExcelButton) {
-          exportExcelButton.addEventListener('click', function() {
-            exportTableToExcel('products-table', 'Products');
-          });
-        }
+        allProducts = data.data;
+        updatePagination();
+        renderTable();
       } else {
-        alert("Failed to fetch data");
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to fetch data',
+        });
       }
     })
     .catch(error => {
       console.error('Error fetching data:', error);
-      alert('Error fetching data');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error fetching data',
+      });
+    });
+
+  document.getElementById('page-number').addEventListener('change', (event) => {
+    const page = parseInt(event.target.value);
+    const totalPages = Math.ceil(allProducts.length / itemsPerPage);
+    if (page >= 1 && page <= totalPages) {
+      currentPage = page;
+      renderTable();
+    }
+  });
+
+  document.getElementById('row_per_page').addEventListener('change', (event) => {
+    itemsPerPage = parseInt(event.target.value);
+    currentPage = 1;
+    updatePagination();
+    renderTable();
     });
 });
 
-// Unified delete function
+// Function to update pagination controls
+function updatePagination() {
+  const totalPages = Math.ceil(allProducts.length / itemsPerPage);
+  document.getElementById('total-pages').value = totalPages;
+  document.getElementById('page-number').max = totalPages; // Update the max attribute
+}
+
+// Function to render the table based on current page and items per page
+function renderTable() {
+  const tbody = document.getElementById('data');
+  tbody.innerHTML = ''; // Clear table content before adding new data
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPageData = allProducts.slice(startIndex, endIndex);
+
+  currentPageData.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-id', row.id);
+
+    const formattedSellingPrice = AutoNumeric.format(row.selling_price, { currencySymbol: 'Rp', decimalPlaces: 2 });
+    const formattedCostOfProduct = AutoNumeric.format(row.cost_of_product, { currencySymbol: 'Rp', decimalPlaces: 2 });
+
+    // Map category ID to category name
+    const categoryName = categories[row.category] || row.category;
+    // Map unit ID to unit name
+    const unitName = units[row.unit] || row.unit;
+
+    tr.innerHTML = `
+      <td><input type="checkbox" class="data-checkbox" id="checkbox-${row.id}"></td>
+      <td>${row.product_name}</td>
+      <td>${row.product_code}</td>
+      <td>${row.barcode}</td>
+      <td>${categoryName}</td>
+      <td>${unitName}</td>
+      <td>${formattedSellingPrice}</td>
+      <td>${formattedCostOfProduct}</td>
+      <td>${row.product_initial_qty}</td>
+      <td>
+        <button class="btn btn-sm btn-light btn-light-bordered edit-button" data-id="${row.id}"><i class="fa fa-edit"></i></button>
+        <button class="btn btn-sm btn-danger delete-button" data-id="${row.id}"><i class="fa fa-trash"></i></button>
+      </td>`;
+    tbody.appendChild(tr);
+
+    // Add event listener for the new delete button
+    tr.querySelector('.delete-button').addEventListener('click', function() {
+      const productId = this.getAttribute('data-id');
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          deleteProducts([productId], () => {
+            tr.remove();
+            Swal.fire(
+              'Deleted!',
+              'Your product has been deleted.',
+              'success'
+            );
+          });
+        }
+      });
+    });
+
+    // Add event listener for the edit button
+    tr.querySelector('.edit-button').addEventListener('click', function() {
+      const productId = this.getAttribute('data-id');
+      openFormEditData(productId);
+    });
+  });
+
+  // Update the pagination controls
+  updatePagination();
+
+  // Update the page number input
+  document.getElementById('page-number').value = currentPage;
+}
+
 function deleteProducts(ids, callback) {
   fetch('http://localhost:3001/products/delete', {
     method: 'POST',
@@ -138,31 +213,57 @@ function deleteProducts(ids, callback) {
     if (data.success) {
       callback();
     } else {
-      alert('Failed to delete products');
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Failed to delete products',
+      });
     }
   })
   .catch(error => {
     console.error('Error deleting products:', error);
-    alert('Error deleting products');
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Error deleting products',
+    });
   });
 }
 
 function deleteSelectedProducts() {
   const selectedIds = Array.from(document.querySelectorAll('.data-checkbox:checked')).map(cb => cb.id.split('-')[1]);
   if (selectedIds.length === 0) {
-    alert('No products selected');
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'No products selected',
+    });
     return;
   }
 
-  if (confirm('Are you sure you want to delete the selected products?')) {
-    deleteProducts(selectedIds, () => {
-      selectedIds.forEach(id => {
-        const row = document.querySelector(`tr[data-id="${id}"]`);
-        if (row) row.remove();
+  Swal.fire({
+    title: 'Are you sure?',
+    text: "You won't be able to revert this!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, delete it!'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      deleteProducts(selectedIds, () => {
+        selectedIds.forEach(id => {
+          const row = document.querySelector(`tr[data-id="${id}"]`);
+          if (row) row.remove();
+        });
+        Swal.fire(
+          'Deleted!',
+          'Your selected products have been deleted.',
+          'success'
+        );
       });
-      alert('Products deleted successfully'); 
-    });
-  }
+    }
+  });
 }
 
 function insertProduct() {
@@ -171,11 +272,15 @@ function insertProduct() {
   const category = document.getElementById('product_category').value;
   const unit = document.getElementById('product_unit').value;
   const sellingPrice = AutoNumeric.getAutoNumericElement('#product_price').getNumber();
-  const costOfProduct = AutoNumeric.getAutoNumericElement('#product_cost').getNumber();
+  const cost_of_product = AutoNumeric.getAutoNumericElement('#product_cost').getNumber();
   const productInitialQty = document.getElementById('product_initial_qty').value;
 
-  if (!productName || !sellingPrice || !costOfProduct || !productInitialQty || !category || !unit) {
-    alert('All required fields must be filled');
+  if (!productName || !sellingPrice || !cost_of_product || !productInitialQty || !category || !unit) {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'All required fields must be filled',
+    });
     return;
   }
 
@@ -188,71 +293,101 @@ function insertProduct() {
     category: category,
     unit: unit,
     selling_price: sellingPrice,
-    cost_of_product: costOfProduct,
+    cost_of_product: cost_of_product,
     product_initial_qty: productInitialQty,
   };
 
-  fetch('http://localhost:3001/products/add', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data)
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      const formattedSellingPrice = AutoNumeric.format(data.data.selling_price, { currencySymbol: 'Rp', decimalPlaces: 2 });
-      const formattedCostOfProduct = AutoNumeric.format(data.data.cost_of_product, { currencySymbol: 'Rp', decimalPlaces: 2 });
-
-      // Map category ID to category name
-      const categoryName = categories[data.data.category] || data.data.category;
-      // Map unit ID to unit name
-      const unitName = units[data.data.unit] || data.data.unit;
-
-      const newRow = `
-        <tr data-id="${data.data.id}">
-          <td><input type="checkbox" class="data-checkbox" id="checkbox-${data.data.id}"></td>
-          <td>${data.data.product_name}</td>
-          <td>${data.data.product_code}</td>
-          <td>${data.data.barcode}</td>
-          <td>${categoryName}</td>
-          <td>${unitName}</td>
-          <td>${formattedSellingPrice}</td>
-          <td>${formattedCostOfProduct}</td>
-          <td>${data.data.product_initial_qty}</td>
-          <td>
-            <button class="btn btn-sm btn-light btn-light-bordered delete-button" data-id="${data.data.id}"><i class="fa fa-trash"></i></button>
-          </td>`;
-      document.getElementById('data').insertAdjacentHTML('beforeend', newRow);
-      alert('Product added successfully');
-
-      document.getElementById('product_name').value = '';
-      document.getElementById('product_category').value = '';
-      AutoNumeric.getAutoNumericElement('#product_price').clear();
-      AutoNumeric.getAutoNumericElement('#product_cost').clear();
-      document.getElementById('product_initial_qty').value = '';
-      document.getElementById('product_unit').value = '';
-      document.getElementById('product_barcode').value = '';
-
-      closeFormAddData();
-
-      // Add event listener for the new delete button
-      document.querySelector(`tr[data-id="${data.data.id}"] .delete-button`).addEventListener('click', function() {
-        const tr = this.closest('tr');
-        const productId = tr.getAttribute('data-id');
-        if (confirm('Are you sure you want to delete this product?')) {
-          deleteProducts([productId], () => tr.remove());
-        }
+  // Determine if adding a new product or editing an existing one
+  if (editingProductId) {
+    // Update existing product
+    data.id = editingProductId;
+    fetch('http://localhost:3001/products/edit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Update the product in the list
+        const index = allProducts.findIndex(product => product.id === editingProductId);
+        allProducts[index] = { ...allProducts[index], ...data.data };
+        renderTable();
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Product updated successfully',
+        }).then(() => {
+          editingProductId = null; // Reset editingProductId
+          closeFormAddData();
+          location.reload(); // Reload the page after successful update
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to update product',
+        });
+      }
+    })
+    .catch(error => {
+      console.error('Error updating product:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error updating product',
       });
-    } else {
-      alert('Failed to add product');
-    }
-  })
-  .catch(error => {
-    console.error('Error adding product:', error);
-    alert('Error adding product');
-  });
+    });
+  } else {
+    // Add new product
+    fetch('http://localhost:3001/products/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        allProducts.push(data.data); // Add new product to the list
+        updatePagination(); // Update pagination controls
+        renderTable(); // Render the table with the new product
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Product added successfully',
+        });
+
+        document.getElementById('product_name').value = '';
+        document.getElementById('product_category').value = '';
+        AutoNumeric.getAutoNumericElement('#product_price').clear();
+        AutoNumeric.getAutoNumericElement('#product_cost').clear();
+        document.getElementById('product_initial_qty').value = '';
+        document.getElementById('product_unit').value = '';
+        document.getElementById('product_barcode').value = '';
+
+        closeFormAddData();
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to add product',
+        });
+      }
+    })
+    .catch(error => {
+      console.error('Error adding product:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error adding product',
+      });
+    });
+  }
 }
 
 function generateProductCode(productName) {
@@ -279,4 +414,85 @@ function exportTableToExcel(tableID, filename = '') {
   document.body.appendChild(downloadLink);
   downloadLink.click();
   document.body.removeChild(downloadLink);
+}
+
+function exportTableToPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  doc.autoTable({
+    html: '#products-table',
+    theme: 'grid',
+    headStyles: { fillColor: [105, 105, 105] }, // Dark gray
+  });
+
+  doc.save('products.pdf');
+}
+
+function printTable() {
+  const table = document.getElementById('products-table').cloneNode(true);
+
+  const rows = table.rows;
+  for (let i = 0; i < rows.length; i++) {
+    rows[i].deleteCell(0); // Remove the first cell (checkbox)
+    rows[i].deleteCell(-1); // Remove the last cell (action buttons)
+  }
+
+  const newWin = window.open("");
+  newWin.document.write(`
+    <html>
+      <head>
+        <title>Print Table</title>
+        <style>
+          table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+          }
+          th {
+            background-color: #f2f2f2;
+          }
+        </style>
+      </head>
+      <body>
+        ${table.outerHTML}
+      </body>
+    </html>
+  `);
+  newWin.document.close();
+  newWin.print();
+  newWin.close();
+}
+
+function searchProducts() {
+  const search = document.getElementById('search-data').value;
+
+  fetch(`http://localhost:3001/products/search/${search}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        allProducts = data.data;
+        currentPage = 1; // Reset to first page
+        updatePagination();
+        renderTable();
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Failed to fetch search results',
+        });
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching search results:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error fetching search results',
+      });
+    });
 }
