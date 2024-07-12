@@ -132,3 +132,8 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('print-button').addEventListener('click', printData);
   document.getElementById('first-page').addEventListener('click', firstPage);
 });
+
+// Cashier toolbar
+function closeCashier() {
+  window.location.href = '../index.html';
+}
